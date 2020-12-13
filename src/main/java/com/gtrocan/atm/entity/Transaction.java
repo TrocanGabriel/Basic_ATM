@@ -1,5 +1,6 @@
 package com.gtrocan.atm.entity;
 
+import com.gtrocan.atm.utils.enums.TransactionType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,4 +31,8 @@ public class Transaction {
 
     @Column(nullable = false)
     private LocalDateTime transactionDate;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TransactionType transactionType;
 }
