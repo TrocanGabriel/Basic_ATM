@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Entity
 @Data
@@ -20,4 +22,11 @@ public class ATM {
 
     @Column(nullable = false)
     private String location;
+
+    @ElementCollection
+    @CollectionTable(name = "atm_denomination_mapping",
+            joinColumns = {@JoinColumn(name = "atm_id", referencedColumnName = "id")})
+    @MapKeyColumn(name = "denomination")
+    @Column(name = "amount")
+    private Map<String, Integer> denomination = new HashMap<>();
 }
