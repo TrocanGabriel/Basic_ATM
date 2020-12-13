@@ -1,0 +1,38 @@
+{
+	"info": {
+		"_postman_id": "91e1edba-a6a7-4424-b707-7a216e3f293f",
+		"name": "Basic_ATM",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create Withdrawal Transaction",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"amount\":50,\r\n    \"accountId\":1,\r\n    \"atmId\":1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/atm/withdrawal",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"atm",
+						"withdrawal"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
