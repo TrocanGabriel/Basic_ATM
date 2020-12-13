@@ -3,7 +3,6 @@ package com.gtrocan.atm.entity;
 import lombok.*;
 
 import javax.persistence.*;
-import javax.validation.constraints.Positive;
 import java.util.List;
 
 
@@ -21,7 +20,6 @@ public class Account {
     private Long id;
 
     @Column(nullable = false)
-    @Positive
     private Integer accountBalance;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.REMOVE)

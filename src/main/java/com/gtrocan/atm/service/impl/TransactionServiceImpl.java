@@ -66,13 +66,15 @@ public class TransactionServiceImpl implements ITransactionService {
             throw new InvalidATMException(ATM_NOT_FOUND_EXCEPTION);
         }
 
-        if(account.getAccountBalance() > withdrawal.getAmount()){
-            Map<String, Integer> withdrawalDenomination = calculateDenomination(withdrawal.getAmount(),atm.getDenomination());
+        if(account.getAccountBalance() >= withdrawal.getAmount()){
+            Map<String, Integer>  availableDenomination = new HashMap<>(atm.getDenomination());
+            Map<String, Integer> withdrawalDenomination = calculateDenomination(withdrawal.getAmount(),availableDenomination);
             updateATMDenomination(atm, withdrawalDenomination);
             Transaction transaction = createTransaction(account, withdrawal);
             Integer transactionAmount = transaction.getAmount();
             updateAccountBalance(account,transactionAmount);
-            return withdrawalDenomination;
+             withdrawalDenomination.entrySet().removeIf(map -> map.getValue() == 0);
+             return withdrawalDenomination;
         } else {
             log.debug("Failed withdrawal for account id {} because account does not have enough money for a transaction of {} RON", withdrawal.getAccountId(), withdrawal.getAmount());
             throw new NotEnoughMoneyException(NOT_ENOUGH_MONEY_EXCEPTION);
@@ -92,30 +94,51 @@ public class TransactionServiceImpl implements ITransactionService {
         atmRepository.save(atm);
     }
 
-    private Map<String, Integer>  calculateDenomination(Integer amount, Map<String, Integer> atmDenomination) {
-        log.debug("Calculating available denominations for Withdrawal of amount {} RON ", amount);
+    private  Map<String, Integer> calculateDenomination(Integer amount, Map<String, Integer> atmDenomination) {
+        log.debug("Calculate every possible combination of denomination for our request amount of {}", amount);
+      Map<String, Integer> withdrawalDenomination = sum_up(amount, atmDenomination);
+      if(withdrawalDenomination.isEmpty()) {
+          log.debug("The available money in ATM were not enough for this transaction of {} RON", amount);
+          throw new NotEnoughMoneyException(ATM_NOT_ENOUGH_MONEY_EXCEPTION);
+      } else {
+          return withdrawalDenomination;
+      }
+    }
+    private  Map<String, Integer> sum_up_recursive(int target, Map<String, Integer> atmDenomination, Map<String, Integer> partialDenomination) {
 
-        Map<String, Integer> withdrawalDenomination = new HashMap<>();
+        int sum = 0;
+        for(Map.Entry<String, Integer> entry : partialDenomination.entrySet()){
+            sum += entry.getValue() * Integer.parseInt(entry.getKey());
+        }
+        if(sum == target){
+            log.debug("Available Denomination found for transaction: {}", partialDenomination.toString());
+            return partialDenomination;
+        }
+        if( sum > target || atmDenomination.isEmpty()){
+            return new HashMap<>();
+        }
         TreeMap<String, Integer> sorted = new TreeMap<>(Collections.reverseOrder());
         sorted.putAll(atmDenomination);
         Set<Map.Entry<String, Integer>> mappings = sorted.entrySet();
-        for(Map.Entry<String, Integer> banknotes : mappings) {
-            int banknoteValue =  Integer.parseInt(banknotes.getKey());
-            if(amount >= banknoteValue){
-                int divider = amount / banknoteValue;
-                int banknotesNeeded = (divider <= banknotes.getValue()) ? divider : banknotes.getValue();
-                amount -= banknoteValue * banknotesNeeded;
-                withdrawalDenomination.put(banknotes.getKey(), banknotesNeeded);
+        for(Map.Entry<String, Integer> entry : mappings){
+            int value = Integer.parseInt(entry.getKey());
+            int notesAmount = (target-sum) / value;
+            if(notesAmount != 0){
+                int availableNotes = (notesAmount > entry.getValue()) ? entry.getValue() : notesAmount;
+                partialDenomination.put(entry.getKey(),availableNotes);
+                atmDenomination.put(entry.getKey(), entry.getValue()-availableNotes);
+                atmDenomination.remove(entry.getKey());
+            } else {
+                partialDenomination.clear();
             }
-            if(amount == 0){
-                break;
-            }
+            return sum_up_recursive(target, atmDenomination, partialDenomination);
         }
-        if(amount != 0) {
-            log.debug("The available money in ATM were not enough for this transaction of {} RON", amount);
-            throw new NotEnoughMoneyException(ATM_NOT_ENOUGH_MONEY_EXCEPTION);
-        }
-        return withdrawalDenomination;
+
+        return partialDenomination;
+    }
+
+    private  Map<String, Integer> sum_up(int targetAmount, Map<String, Integer> atmDenomination) {
+      return  sum_up_recursive(targetAmount, atmDenomination,new HashMap<>());
     }
 
     private Transaction createTransaction(Account account, Withdrawal withdrawal) {

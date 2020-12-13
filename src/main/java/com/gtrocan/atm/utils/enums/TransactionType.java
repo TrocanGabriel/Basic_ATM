@@ -5,7 +5,7 @@ import lombok.Getter;
 import java.text.MessageFormat;
 
 @Getter
-public enum TransactionType {
+public enum  TransactionType {
 
     WITHDRAWAL_TRANSACTION("WT", "Process a withdrawal transaction");
 
