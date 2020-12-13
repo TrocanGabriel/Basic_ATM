@@ -9,7 +9,7 @@ As described above this application was created to simulate a simple withdrawal 
 Steps:
 
 1. Open terminal in the root of the project and run the following commands: 
-   mvn clean install
+   mvn clean install ; 
    mvn spring-boot:run
 
 2. Use Postman in order to test the request with the postman collection attached in the project
