@@ -96,7 +96,8 @@ public class TransactionServiceImpl implements ITransactionService {
 
     private  Map<String, Integer> calculateDenomination(Integer amount, Map<String, Integer> atmDenomination) {
         log.debug("Calculate every possible combination of denomination for our request amount of {}", amount);
-      Map<String, Integer> withdrawalDenomination = sum_up(amount, atmDenomination);
+
+      Map<String, Integer> withdrawalDenomination = sumUpDenomination(amount, atmDenomination);
       if(withdrawalDenomination.isEmpty()) {
           log.debug("The available money in ATM were not enough for this transaction of {} RON", amount);
           throw new NotEnoughMoneyException(ATM_NOT_ENOUGH_MONEY_EXCEPTION);
@@ -104,40 +105,40 @@ public class TransactionServiceImpl implements ITransactionService {
           return withdrawalDenomination;
       }
     }
-    private  Map<String, Integer> sum_up_recursive(int target, Map<String, Integer> atmDenomination, Map<String, Integer> partialDenomination) {
+
+    private  Map<String, Integer> sumUpDenominationRecursive(int targetAmount, Map<String, Integer> atmDenomination, Map<String, Integer> partialDenomination) {
 
         int sum = 0;
         for(Map.Entry<String, Integer> entry : partialDenomination.entrySet()){
             sum += entry.getValue() * Integer.parseInt(entry.getKey());
         }
-        if(sum == target){
+        if(sum == targetAmount){
             log.debug("Available Denomination found for transaction: {}", partialDenomination.toString());
             return partialDenomination;
         }
-        if( sum > target || atmDenomination.isEmpty()){
+        if( sum > targetAmount || atmDenomination.isEmpty()){
             return new HashMap<>();
         }
 
         for(Map.Entry<String, Integer> entry : atmDenomination.entrySet()){
             int value = Integer.parseInt(entry.getKey());
-            int notesAmount = (target-sum) / value;
+            int notesAmount = (targetAmount-sum) / value;
             if(notesAmount != 0){
                 int availableNotes = (notesAmount > entry.getValue()) ? entry.getValue() : notesAmount;
                 partialDenomination.put(entry.getKey(),availableNotes);
-                atmDenomination.put(entry.getKey(), entry.getValue()-availableNotes);
-                atmDenomination.remove(entry.getKey());
+                atmDenomination.put(entry.getKey(), entry.getValue() - availableNotes);
             } else {
                 partialDenomination.clear();
-                atmDenomination.remove(entry.getKey());
             }
-            return sum_up_recursive(target, atmDenomination, partialDenomination);
+            atmDenomination.remove(entry.getKey());
+            return sumUpDenominationRecursive(targetAmount, atmDenomination, partialDenomination);
         }
 
         return partialDenomination;
     }
 
-    private  Map<String, Integer> sum_up(int targetAmount, Map<String, Integer> atmDenomination) {
-      return  sum_up_recursive(targetAmount, atmDenomination,new HashMap<>());
+    private  Map<String, Integer> sumUpDenomination(int targetAmount, Map<String, Integer> atmDenomination) {
+      return  sumUpDenominationRecursive(targetAmount, atmDenomination,new HashMap<>());
     }
 
     private Transaction createTransaction(Account account, Withdrawal withdrawal) {

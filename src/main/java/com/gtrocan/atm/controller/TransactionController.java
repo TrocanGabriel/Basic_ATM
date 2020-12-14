@@ -26,4 +26,5 @@ public class TransactionController {
         log.info(LOG_FOR_ATM_WITHDRAWAL,withdrawal.getAtmId(), withdrawal.getAccountId(), withdrawal.getAmount());
         return transactionService.processTransaction(withdrawal);
     }
+
 }
