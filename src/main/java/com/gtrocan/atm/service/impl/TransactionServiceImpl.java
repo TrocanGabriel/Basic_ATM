@@ -117,10 +117,8 @@ public class TransactionServiceImpl implements ITransactionService {
         if( sum > target || atmDenomination.isEmpty()){
             return new HashMap<>();
         }
-        TreeMap<String, Integer> sorted = new TreeMap<>(Collections.reverseOrder());
-        sorted.putAll(atmDenomination);
-        Set<Map.Entry<String, Integer>> mappings = sorted.entrySet();
-        for(Map.Entry<String, Integer> entry : mappings){
+
+        for(Map.Entry<String, Integer> entry : atmDenomination.entrySet()){
             int value = Integer.parseInt(entry.getKey());
             int notesAmount = (target-sum) / value;
             if(notesAmount != 0){
@@ -130,6 +128,7 @@ public class TransactionServiceImpl implements ITransactionService {
                 atmDenomination.remove(entry.getKey());
             } else {
                 partialDenomination.clear();
+                atmDenomination.remove(entry.getKey());
             }
             return sum_up_recursive(target, atmDenomination, partialDenomination);
         }
